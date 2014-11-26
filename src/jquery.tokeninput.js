@@ -270,7 +270,7 @@
               if ($(input).data("settings").disabled) {
                   return false;
               } else
-              if ($(input).data("settings").localDataEmptyList && $(input).data("settings").local_data) {
+              if (!this.value.length && $(input).data("settings").localDataEmptyList && $(input).data("settings").local_data) {
                 // show all local data list
                 populateEmptyDropdown();
               } else
@@ -355,7 +355,12 @@
 
                         return false;
                       } else if($(this).val().length === 1) {
+                          if ($(input).data("settings").localDataEmptyList && $(input).data("settings").local_data) {
+                          // show all local data list
+                          populateEmptyDropdown();
+                        } else {
                           hide_dropdown();
+                        }
                       } else {
                           // set a timeout just long enough to let this function finish.
                           setTimeout(function(){ do_search(); }, 5);
@@ -1093,6 +1098,10 @@
                   // Make the request
                   $.ajax(ajax_params);
               } else if($(input).data("settings").local_data) {
+                  // fix delay time
+                  if ($(input).data("settings").localDataEmptyList && input_box.val().length == 0) {
+                      return;
+                  }
                   // Do the search through local data
                   var results = $.grep($(input).data("settings").local_data, function (row) {
                       return row[$(input).data("settings").propertyToSearch].toLowerCase().indexOf(query.toLowerCase()) > -1;
