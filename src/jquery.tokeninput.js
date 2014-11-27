@@ -274,10 +274,10 @@
 				outline: "none"
 			})
 			.attr("id", TLSelf.settings.idPrefix + input.id)
-			.focus(function() {
+			.focus(function(event) {
 				if (TLSelf.settings.disabled) {
 					return false;
-				} else if (!this.value.length && TLSelf.settings.localDataEmptyList && TLSelf.settings.local_data) {
+				} else if (!this.value.length && TLSelf.settings.localDataEmptyList && TLSelf.settings.local_data && !event.isTrigger) {
 					// show all local data list
 					populateEmptyDropdown();
 				} else if (TLSelf.settings.tokenLimit === null || TLSelf.settings.tokenLimit !== token_count) {
@@ -304,7 +304,7 @@
 					case KEY.LEFT:
 					case KEY.RIGHT:
 						if (this.value.length > 0) return;
-						
+
 						previous_token = input_token.prev();
 						next_token = input_token.next();
 
@@ -362,7 +362,7 @@
 						if (this.value.length === 0) {
 							if (selected_token) {
 								delete_token($(selected_token));
-								hiddenInput.change();
+								$hiddenInput.change();
 							} else if (previous_token.length) {
 								select_token($(previous_token.get(0)));
 							}
@@ -389,7 +389,7 @@
 					case KEY.COMMA:
 						if (selected_dropdown_item) {
 							add_token($(selected_dropdown_item).data("tokeninput"));
-							hiddenInput.change();
+							$hiddenInput.change();
 							if (TLSelf.settings.localDataEmptyList && TLSelf.settings.local_data) {
 								// show all local data list
 								populateEmptyDropdown();
@@ -433,17 +433,18 @@
 		}
 
 		// Keep a reference to the original input box
-		var hiddenInput = $(input)
+		var $hiddenInput = $(input)
 			.hide()
 			.val("")
 			.focus(function() {
 				focusWithTimeout($input_box);
+				return $hiddenInput;
 			})
 			.blur(function() {
 				$input_box.blur();
 
 				//return the object to this can be referenced in the callback functions.
-				return hiddenInput;
+				return $hiddenInput;
 			});
 
 		// Keep a reference to the selected token and dropdown item
@@ -463,10 +464,10 @@
 					if (selected_token) {
 						deselect_token($(selected_token), POSITION.END);
 					}
-
-					// Focus input box
-					focusWithTimeout($input_box);
 				}
+
+				// Focus input box
+				focusWithTimeout($input_box);
 			})
 			.mouseover(function(event) {
 				var li = $(event.target).closest("li");
@@ -480,7 +481,7 @@
 					li.removeClass(TLSelf.settings.classes.highlightedToken);
 				}
 			})
-			.insertBefore(hiddenInput);
+			.insertBefore($hiddenInput);
 
 		// The token holding the input box
 		var input_token = $("<li />")
@@ -510,11 +511,11 @@
 			});
 
 		// Pre-populate list if items exist
-		hiddenInput.val("");
-		var li_data = TLSelf.settings.prePopulate || hiddenInput.data("pre");
+		$hiddenInput.val("");
+		var li_data = TLSelf.settings.prePopulate || $hiddenInput.data("pre");
 
 		if (TLSelf.settings.processPrePopulate && $.isFunction(TLSelf.settings.onResult)) {
-			li_data = TLSelf.settings.onResult.call(hiddenInput, li_data);
+			li_data = TLSelf.settings.onResult.call($hiddenInput, li_data);
 		}
 
 		if (li_data && li_data.length) {
@@ -601,7 +602,7 @@
 			if (selected_token) {
 				deselect_token($(selected_token), POSITION.END);
 			}
-			hiddenInput.attr('disabled', TLSelf.settings.disabled);
+			$hiddenInput.attr('disabled', TLSelf.settings.disabled);
 		}
 
 		function checkTokenLimit() {
@@ -640,7 +641,7 @@
 				}
 
 				if ($.isFunction(TLSelf.settings.onFreeTaggingAdd)) {
-					token = TLSelf.settings.onFreeTaggingAdd.call(hiddenInput, token);
+					token = TLSelf.settings.onFreeTaggingAdd.call($hiddenInput, token);
 				}
 				var object = {};
 				object[TLSelf.settings.tokenValue] = object[TLSelf.settings.propertyToSearch] = token;
@@ -665,7 +666,7 @@
 					.click(function() {
 						if (!TLSelf.settings.disabled) {
 							delete_token($(this).parent());
-							hiddenInput.change();
+							$hiddenInput.change();
 							return false;
 						}
 					});
@@ -680,7 +681,7 @@
 			selected_token_index++;
 
 			// Update the hidden input
-			update_hiddenInput(saved_tokens, hiddenInput);
+			update_hiddenInput(saved_tokens, $hiddenInput);
 
 			token_count += 1;
 
@@ -734,7 +735,7 @@
 
 			// Execute the onAdd callback if defined
 			if ($.isFunction(callback)) {
-				callback.call(hiddenInput, item);
+				callback.call($hiddenInput, item);
 			}
 		}
 
@@ -745,7 +746,7 @@
 				selected_token = token.get(0);
 
 				// Hide input box
-				$input_box.val("").focus();
+				$input_box.val("");
 
 				// Hide dropdown if it is visible (eg if we clicked to select token)
 				hide_dropdown();
@@ -811,7 +812,7 @@
 			if (index < selected_token_index) selected_token_index--;
 
 			// Update the hidden input
-			update_hiddenInput(saved_tokens, hiddenInput);
+			update_hiddenInput(saved_tokens, $hiddenInput);
 
 			token_count -= 1;
 
@@ -824,19 +825,19 @@
 
 			// Execute the onDelete callback if defined
 			if ($.isFunction(callback)) {
-				callback.call(hiddenInput, token_data);
+				callback.call($hiddenInput, token_data);
 			}
 		}
 
 		// Update the hidden input box value
-		function update_hiddenInput(saved_tokens, hiddenInput) {
+		function update_hiddenInput(saved_tokens, $hiddenInput) {
 			var token_values = $.map(saved_tokens, function(el) {
 				if (typeof TLSelf.settings.tokenValue == 'function')
 					return TLSelf.settings.tokenValue.call(this, el);
 
 				return el[TLSelf.settings.tokenValue];
 			});
-			hiddenInput.val(token_values.join(TLSelf.settings.tokenDelimiter));
+			$hiddenInput.val(token_values.join(TLSelf.settings.tokenDelimiter));
 
 		}
 
@@ -943,7 +944,7 @@
 		function populateEmptyDropdown() {
 			var results = TLSelf.settings.local_data;
 			if ($.isFunction(TLSelf.settings.onResult)) {
-				results = TLSelf.settings.onResult.call(hiddenInput, results);
+				results = TLSelf.settings.onResult.call($hiddenInput, results);
 			}
 			populateDropdown('', results);
 			return true;
@@ -963,7 +964,7 @@
 					})
 					.mousedown(function(event) {
 						add_token($(event.target).closest("li").data("tokeninput"));
-						hiddenInput.change();
+						$hiddenInput.change();
 						return false;
 					})
 					.hide();
@@ -1053,7 +1054,7 @@
 			var cached_results = cache.get(cache_key);
 			if (cached_results) {
 				if ($.isFunction(TLSelf.settings.onCachedResult)) {
-					cached_results = TLSelf.settings.onCachedResult.call(hiddenInput, cached_results);
+					cached_results = TLSelf.settings.onCachedResult.call($hiddenInput, cached_results);
 				}
 				populateDropdown(query, cached_results);
 			} else {
@@ -1102,7 +1103,7 @@
 					ajax_params.success = function(results) {
 						cache.add(cache_key, TLSelf.settings.jsonContainer ? results[TLSelf.settings.jsonContainer] : results);
 						if ($.isFunction(TLSelf.settings.onResult)) {
-							results = TLSelf.settings.onResult.call(hiddenInput, results);
+							results = TLSelf.settings.onResult.call($hiddenInput, results);
 						}
 
 						// only populate the dropdown if the results are associated with the active search query
@@ -1130,7 +1131,7 @@
 
 					cache.add(cache_key, results);
 					if ($.isFunction(TLSelf.settings.onResult)) {
-						results = TLSelf.settings.onResult.call(hiddenInput, results);
+						results = TLSelf.settings.onResult.call($hiddenInput, results);
 					}
 					populateDropdown(query, results);
 				}
@@ -1152,12 +1153,9 @@
 		//
 		// obj: a jQuery object to focus()
 		function focusWithTimeout(object) {
-			setTimeout(
-				function() {
-					object.focus();
-				},
-				50
-			);
+			setTimeout(function() {
+				object.trigger('focus');
+			}, 50);
 		}
 	};
 
