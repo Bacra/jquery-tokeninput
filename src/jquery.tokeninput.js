@@ -437,7 +437,7 @@
 			.hide()
 			.val("")
 			.focus(function() {
-				focusWithTimeout($input_box);
+				focusInputWithTimeout();
 				return $hiddenInput;
 			})
 			.blur(function() {
@@ -464,10 +464,10 @@
 					if (selected_token) {
 						deselect_token($(selected_token), POSITION.END);
 					}
-				}
 
-				// Focus input box
-				focusWithTimeout($input_box);
+					// Focus input box
+					focusInputWithTimeout();
+				}
 			})
 			.mouseover(function(event) {
 				var li = $(event.target).closest("li");
@@ -713,7 +713,7 @@
 				if (found_existing_token) {
 					select_token(found_existing_token);
 					input_token.insertAfter(found_existing_token);
-					focusWithTimeout($input_box);
+					focusInputWithTimeout();
 					return;
 				}
 			}
@@ -751,6 +751,9 @@
 				// Hide dropdown if it is visible (eg if we clicked to select token)
 				hide_dropdown();
 			}
+
+			// focus for remove
+			focusInputWithTimeout();
 		}
 
 		// Deselect a token in the token list
@@ -770,7 +773,7 @@
 			}
 
 			// Show the input box and give it focus again
-			focusWithTimeout($input_box);
+			focusInputWithTimeout();
 		}
 
 		// Toggle selection of a token in the token list
@@ -802,7 +805,7 @@
 			selected_token = null;
 
 			// Show the input box and give it focus again
-			focusWithTimeout($input_box);
+			focusInputWithTimeout();
 
 			// Remove this token from the saved list
 			saved_tokens = saved_tokens.slice(0, index).concat(saved_tokens.slice(index + 1));
@@ -820,7 +823,7 @@
 				$input_box
 					.show()
 					.val("");
-				focusWithTimeout($input_box);
+				focusInputWithTimeout();
 			}
 
 			// Execute the onDelete callback if defined
@@ -1152,9 +1155,12 @@
 		// (See, e.g., http://stackoverflow.com/questions/2600186/focus-doesnt-work-in-ie)
 		//
 		// obj: a jQuery object to focus()
-		function focusWithTimeout(object) {
-			setTimeout(function() {
-				object.trigger('focus');
+		function focusInputWithTimeout() {
+			if (focusInputWithTimeout.t) return;
+
+			focusInputWithTimeout.t = setTimeout(function() {
+				focusInputWithTimeout.t = null;
+				$input_box.trigger('focus');
 			}, 50);
 		}
 	};
