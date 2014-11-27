@@ -174,6 +174,9 @@
 		$: function(query) {
 			return this.data("tokenInputObject").$(query);
 		},
+		getBody: function() {
+			return this.data("tokenInputObject").getBody();
+		},
 		toggleDisabled: function(disable) {
 			this.data("tokenInputObject").toggleDisabled(disable);
 			return this;
@@ -283,7 +286,7 @@
 				} else if (TLSelf.settings.tokenLimit === null || TLSelf.settings.tokenLimit !== token_count) {
 					show_dropdown_hint();
 				}
-				token_list.addClass(TLSelf.settings.classes.focused);
+				$token_list.addClass(TLSelf.settings.classes.focused);
 			})
 			.blur(function() {
 				hide_dropdown();
@@ -293,7 +296,7 @@
 				}
 
 				$(this).val("");
-				token_list.removeClass(TLSelf.settings.classes.focused);
+				$token_list.removeClass(TLSelf.settings.classes.focused);
 			})
 			.bind("keyup keydown blur update", resize_input)
 			.keydown(function(event) {
@@ -365,6 +368,11 @@
 								$hiddenInput.change();
 							} else if (previous_token.length) {
 								select_token($(previous_token.get(0)));
+							}
+
+							if (TLSelf.settings.localDataEmptyList && TLSelf.settings.local_data) {
+								// show all local data list
+								populateEmptyDropdown();
 							}
 
 							return false;
@@ -453,7 +461,7 @@
 		var selected_dropdown_item = null;
 
 		// The list to store the token items in
-		var token_list = $("<ul />")
+		var $token_list = $("<ul />")
 			.addClass(TLSelf.settings.classes.tokenList)
 			.click(function(event) {
 				var li = $(event.target).closest("li");
@@ -486,7 +494,7 @@
 		// The token holding the input box
 		var input_token = $("<li />")
 			.addClass(TLSelf.settings.classes.inputToken)
-			.appendTo(token_list)
+			.appendTo($token_list)
 			.append($input_box);
 
 		// The list to store the dropdown items in
@@ -536,7 +544,7 @@
 		//
 
 		this.clear = function() {
-			token_list.children("li").each(function() {
+			$token_list.children("li").each(function() {
 				if ($(this).children("input").length === 0) {
 					delete_token($(this));
 				}
@@ -548,7 +556,7 @@
 		};
 
 		this.remove = function(item) {
-			token_list.children("li").each(function() {
+			$token_list.children("li").each(function() {
 				if ($(this).children("input").length === 0) {
 					var currToken = $(this).data("tokeninput");
 					var match = true;
@@ -574,7 +582,11 @@
 		};
 
 		this.$ = function(query) {
-			return token_list.find(query);
+			return $token_list.find(query);
+		};
+
+		this.getBody = function() {
+			return $token_list;
 		};
 
 		// Resize input to maximum width so the placeholder can be seen
@@ -597,7 +609,7 @@
 				TLSelf.settings.disabled = !TLSelf.settings.disabled;
 			}
 			$input_box.attr('disabled', TLSelf.settings.disabled);
-			token_list.toggleClass(TLSelf.settings.classes.disabled, TLSelf.settings.disabled);
+			$token_list.toggleClass(TLSelf.settings.classes.disabled, TLSelf.settings.disabled);
 			// if there is any token selected we deselect it
 			if (selected_token) {
 				deselect_token($(selected_token), POSITION.END);
@@ -619,7 +631,7 @@
 			}
 
 			// Get width left on the current line
-			var width_left = token_list.width() - $input_box.offset().left - token_list.offset().left;
+			var width_left = $token_list.width() - $input_box.offset().left - $token_list.offset().left;
 			// Enter new content into resizer and resize input accordingly
 			var t_val = _escapeHTML(settings.placeholder);
 			var w_placeholder = w_val = 30;
@@ -628,7 +640,7 @@
 			if (t_val) w_val += input_resizer.html(t_val).width();
 
 			// Get maximum width, minimum the size of input and maximum the widget's width
-			$input_box.width(Math.min(token_list.width(),
+			$input_box.width(Math.min($token_list.width(),
 				Math.max(width_left, w_placeholder, w_val)));
 		}
 
@@ -701,7 +713,7 @@
 			// See if the token already exists and select it if we don't want duplicates
 			if (token_count > 0 && TLSelf.settings.preventDuplicates) {
 				var found_existing_token = null;
-				token_list.children().each(function() {
+				$token_list.children().each(function() {
 					var existing_token = $(this);
 					var existing_data = $.data(existing_token.get(0), "tokeninput");
 					if (existing_data && existing_data[settings.tokenValue] === item[settings.tokenValue]) {
@@ -768,7 +780,7 @@
 				input_token.insertAfter(token);
 				selected_token_index++;
 			} else {
-				input_token.appendTo(token_list);
+				input_token.appendTo($token_list);
 				selected_token_index = token_count;
 			}
 
@@ -853,7 +865,7 @@
 		function show_dropdown() {
 			var style = {};
 			if (typeof TLSelf.settings.dropdownStyle == 'function') {
-				style = TLSelf.settings.dropdownStyle.call(dropdown, token_list, $input_box) || {};
+				style = TLSelf.settings.dropdownStyle.call(dropdown, $token_list, $input_box) || {};
 			}
 			$.each(['position', 'top', 'left', 'width', 'zIndex', 'z-index'], function(index, name) {
 				if (style.hasOwnProperty(name)) return;
@@ -862,13 +874,13 @@
 						style.position = 'absolute';
 						break;
 					case 'top':
-						style.top = token_list.offset().top + token_list.outerHeight(true);
+						style.top = $token_list.offset().top + $token_list.outerHeight(true);
 						break;
 					case 'left':
-						style.left = token_list.offset().left;
+						style.left = $token_list.offset().left;
 						break;
 					case 'width':
-						style.width = token_list.width();
+						style.width = $token_list.width();
 						break;
 					case 'zIndex':
 					case 'z-index':
