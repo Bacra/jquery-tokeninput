@@ -214,7 +214,7 @@
 
 	// TokenList class for each input
 	$.TokenList = function(input, url_or_data, settings) {
-		this.settings = TLSelf.settings;
+		this.settings = settings;
 		var TLSelf = this;
 		//
 		// Initialization
