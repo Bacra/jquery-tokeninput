@@ -182,6 +182,13 @@
 			$.extend(this.data("tokenInputObject").settings, options || {});
 			return this;
 		},
+		getOptions: function(name) {
+			var settings = this.data("tokenInputObject").settings;
+			return name ? settings[name] : settings;
+		},
+		self: function() {
+			return this.data("tokenInputObject");
+		},
 		destroy: function() {
 			if (this.data("tokenInputObject")) {
 				this.data("tokenInputObject").clear();
