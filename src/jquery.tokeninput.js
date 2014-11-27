@@ -269,7 +269,7 @@
 		var input_val;
 
 		// Create a new text input an attach keyup events
-		var input_box = $("<input type=\"text\" autocomplete=\"off\" autocapitalize=\"off\"/>")
+		var $input_box = $("<input type=\"text\" autocomplete=\"off\" autocapitalize=\"off\"/>")
 			.css({
 				outline: "none"
 			})
@@ -303,47 +303,55 @@
 				switch (event.keyCode) {
 					case KEY.LEFT:
 					case KEY.RIGHT:
+						if (this.value.length > 0) return;
+						
+						previous_token = input_token.prev();
+						next_token = input_token.next();
+
+						if ((previous_token.length && previous_token.get(0) === selected_token)
+							|| (next_token.length && next_token.get(0) === selected_token)) {
+							// Check if there is a previous/next token and it is selected
+							if (event.keyCode === KEY.LEFT) {
+								deselect_token($(selected_token), POSITION.BEFORE);
+							} else {
+								deselect_token($(selected_token), POSITION.AFTER);
+							}
+						} else if (event.keyCode === KEY.LEFT && previous_token.length) {
+							// We are moving left, select the previous token if it exists
+							select_token($(previous_token.get(0)));
+						} else if (event.keyCode === KEY.RIGHT && next_token.length) {
+							// We are moving right, select the next token if it exists
+							select_token($(next_token.get(0)));
+						} else {
+							return;
+						}
+
+						event.preventDefault();
+						break;
 					case KEY.UP:
 					case KEY.DOWN:
-						if (this.value.length === 0 && (!TLSelf.settings.localDataEmptyList || !TLSelf.settings.local_data)) {
-							previous_token = input_token.prev();
-							next_token = input_token.next();
+						
+						var dropdown_item = null;
 
-							if ((previous_token.length && previous_token.get(0) === selected_token)
-								|| (next_token.length && next_token.get(0) === selected_token)) {
-								// Check if there is a previous/next token and it is selected
-								if (event.keyCode === KEY.LEFT || event.keyCode === KEY.UP) {
-									deselect_token($(selected_token), POSITION.BEFORE);
-								} else {
-									deselect_token($(selected_token), POSITION.AFTER);
-								}
-							} else if ((event.keyCode === KEY.LEFT || event.keyCode === KEY.UP) && previous_token.length) {
-								// We are moving left, select the previous token if it exists
-								select_token($(previous_token.get(0)));
-							} else if ((event.keyCode === KEY.RIGHT || event.keyCode === KEY.DOWN) && next_token.length) {
-								// We are moving right, select the next token if it exists
-								select_token($(next_token.get(0)));
+						if (event.keyCode === KEY.DOWN) {
+							if (selected_dropdown_item) {
+								dropdown_item = $(selected_dropdown_item).next();
+							}
+							if (!dropdown_item || !dropdown_item.length) {
+								dropdown_item = $(dropdown).find('li').first();
 							}
 						} else {
-							var dropdown_item = null;
-
-							if (event.keyCode === KEY.DOWN || event.keyCode === KEY.RIGHT) {
-								if (selected_dropdown_item) {
-									dropdown_item = $(selected_dropdown_item).next();
-								}
-								if (!dropdown_item || !dropdown_item.length) {
-									dropdown_item = $(dropdown).find('li').first();
-								}
-							} else {
-								if (selected_dropdown_item) {
-									dropdown_item = $(selected_dropdown_item).prev();
-								}
-								if (!dropdown_item || !dropdown_item.length) {
-									dropdown_item = $(dropdown).find('li').last();
-								}
+							if (selected_dropdown_item) {
+								dropdown_item = $(selected_dropdown_item).prev();
 							}
+							if (!dropdown_item || !dropdown_item.length) {
+								dropdown_item = $(dropdown).find('li').last();
+							}
+						}
 
+						if (dropdown_item && dropdown_item.length) {
 							select_dropdown_item(dropdown_item);
+							event.preventDefault();
 						}
 
 						break;
@@ -421,7 +429,7 @@
 
 		// Keep reference for placeholder
 		if (settings.placeholder) {
-			input_box.attr("placeholder", settings.placeholder);
+			$input_box.attr("placeholder", settings.placeholder);
 		}
 
 		// Keep a reference to the original input box
@@ -429,10 +437,10 @@
 			.hide()
 			.val("")
 			.focus(function() {
-				focusWithTimeout(input_box);
+				focusWithTimeout($input_box);
 			})
 			.blur(function() {
-				input_box.blur();
+				$input_box.blur();
 
 				//return the object to this can be referenced in the callback functions.
 				return hiddenInput;
@@ -457,7 +465,7 @@
 					}
 
 					// Focus input box
-					focusWithTimeout(input_box);
+					focusWithTimeout($input_box);
 				}
 			})
 			.mouseover(function(event) {
@@ -478,7 +486,7 @@
 		var input_token = $("<li />")
 			.addClass(TLSelf.settings.classes.inputToken)
 			.appendTo(token_list)
-			.append(input_box);
+			.append($input_box);
 
 		// The list to store the dropdown items in
 		var dropdown = $("<div/>")
@@ -488,16 +496,16 @@
 
 		// Magic element to help us resize the text input
 		var input_resizer = $("<tester/>")
-			.insertAfter(input_box)
+			.insertAfter($input_box)
 			.css({
 				position: "absolute",
 				top: -9999,
 				left: -9999,
 				width: "auto",
-				fontSize: input_box.css("fontSize"),
-				fontFamily: input_box.css("fontFamily"),
-				fontWeight: input_box.css("fontWeight"),
-				letterSpacing: input_box.css("letterSpacing"),
+				fontSize: $input_box.css("fontSize"),
+				fontFamily: $input_box.css("fontFamily"),
+				fontWeight: $input_box.css("fontWeight"),
+				letterSpacing: $input_box.css("letterSpacing"),
 				whiteSpace: "nowrap"
 			});
 
@@ -587,7 +595,7 @@
 			} else {
 				TLSelf.settings.disabled = !TLSelf.settings.disabled;
 			}
-			input_box.attr('disabled', TLSelf.settings.disabled);
+			$input_box.attr('disabled', TLSelf.settings.disabled);
 			token_list.toggleClass(TLSelf.settings.classes.disabled, TLSelf.settings.disabled);
 			// if there is any token selected we deselect it
 			if (selected_token) {
@@ -598,19 +606,19 @@
 
 		function checkTokenLimit() {
 			if (TLSelf.settings.tokenLimit !== null && token_count >= TLSelf.settings.tokenLimit) {
-				input_box.hide();
+				$input_box.hide();
 				hide_dropdown();
 				return;
 			}
 		}
 
 		function resize_input() {
-			if (input_val === (input_val = input_box.val())) {
+			if (input_val === (input_val = $input_box.val())) {
 				return;
 			}
 
 			// Get width left on the current line
-			var width_left = token_list.width() - input_box.offset().left - token_list.offset().left;
+			var width_left = token_list.width() - $input_box.offset().left - token_list.offset().left;
 			// Enter new content into resizer and resize input accordingly
 			var t_val = _escapeHTML(settings.placeholder);
 			var w_placeholder = w_val = 30;
@@ -619,12 +627,12 @@
 			if (t_val) w_val += input_resizer.html(t_val).width();
 
 			// Get maximum width, minimum the size of input and maximum the widget's width
-			input_box.width(Math.min(token_list.width(),
+			$input_box.width(Math.min(token_list.width(),
 				Math.max(width_left, w_placeholder, w_val)));
 		}
 
 		function add_freetagging_tokens() {
-			var value = $.trim(input_box.val());
+			var value = $.trim($input_box.val());
 			var tokens = value.split(TLSelf.settings.tokenDelimiter);
 			$.each(tokens, function(i, token) {
 				if (!token) {
@@ -678,7 +686,7 @@
 
 			// Check the token limit
 			if (TLSelf.settings.tokenLimit !== null && token_count >= TLSelf.settings.tokenLimit) {
-				input_box.hide();
+				$input_box.hide();
 				hide_dropdown();
 			}
 
@@ -704,12 +712,12 @@
 				if (found_existing_token) {
 					select_token(found_existing_token);
 					input_token.insertAfter(found_existing_token);
-					focusWithTimeout(input_box);
+					focusWithTimeout($input_box);
 					return;
 				}
 			}
 
-			// Squeeze input_box so we force no unnecessary line break
+			// Squeeze $input_box so we force no unnecessary line break
 			resize_input();
 
 			// Insert the new tokens
@@ -719,7 +727,7 @@
 			}
 
 			// Clear input box
-			input_box.val("");
+			$input_box.val("");
 
 			// Don't show the help dropdown, they've got the idea
 			hide_dropdown();
@@ -737,7 +745,7 @@
 				selected_token = token.get(0);
 
 				// Hide input box
-				input_box.val("").focus();
+				$input_box.val("").focus();
 
 				// Hide dropdown if it is visible (eg if we clicked to select token)
 				hide_dropdown();
@@ -761,7 +769,7 @@
 			}
 
 			// Show the input box and give it focus again
-			focusWithTimeout(input_box);
+			focusWithTimeout($input_box);
 		}
 
 		// Toggle selection of a token in the token list
@@ -793,12 +801,12 @@
 			selected_token = null;
 
 			// Show the input box and give it focus again
-			focusWithTimeout(input_box);
+			focusWithTimeout($input_box);
 
 			// Remove this token from the saved list
 			saved_tokens = saved_tokens.slice(0, index).concat(saved_tokens.slice(index + 1));
 			if (saved_tokens.length == 0) {
-				input_box.attr("placeholder", settings.placeholder)
+				$input_box.attr("placeholder", settings.placeholder)
 			}
 			if (index < selected_token_index) selected_token_index--;
 
@@ -808,10 +816,10 @@
 			token_count -= 1;
 
 			if (TLSelf.settings.tokenLimit !== null) {
-				input_box
+				$input_box
 					.show()
 					.val("");
-				focusWithTimeout(input_box);
+				focusWithTimeout($input_box);
 			}
 
 			// Execute the onDelete callback if defined
@@ -841,7 +849,7 @@
 		function show_dropdown() {
 			var style = {};
 			if (typeof TLSelf.settings.dropdownStyle == 'function') {
-				style = TLSelf.settings.dropdownStyle.call(dropdown, token_list, input_box) || {};
+				style = TLSelf.settings.dropdownStyle.call(dropdown, token_list, $input_box) || {};
 			}
 			$.each(['position', 'top', 'left', 'width', 'zIndex', 'z-index'], function(index, name) {
 				if (style.hasOwnProperty(name)) return;
@@ -1019,7 +1027,7 @@
 		// Do a search and show the "searching" dropdown if the input is longer
 		// than TLSelf.settings.minChars
 		function do_search() {
-			var query = input_box.val();
+			var query = $input_box.val();
 
 			if (query && query.length) {
 				if (selected_token) {
@@ -1098,7 +1106,7 @@
 						}
 
 						// only populate the dropdown if the results are associated with the active search query
-						if (input_box.val() === query) {
+						if ($input_box.val() === query) {
 							populateDropdown(query, TLSelf.settings.jsonContainer ? results[TLSelf.settings.jsonContainer] : results);
 						}
 					};
@@ -1112,7 +1120,7 @@
 					$.ajax(ajax_params);
 				} else if (TLSelf.settings.local_data) {
 					// fix delay time
-					if (TLSelf.settings.localDataEmptyList && input_box.val().length == 0) {
+					if (TLSelf.settings.localDataEmptyList && $input_box.val().length == 0) {
 						return;
 					}
 					// Do the search through local data
