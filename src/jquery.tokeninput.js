@@ -271,6 +271,8 @@
 		var timeout;
 		var input_val;
 
+		var timeout_blur;
+
 		// Create a new text input an attach keyup events
 		var $input_box = $("<input type=\"text\" autocomplete=\"off\" autocapitalize=\"off\"/>")
 			.css({
@@ -278,6 +280,11 @@
 			})
 			.attr("id", TLSelf.settings.idPrefix + input.id)
 			.focus(function(event) {
+				if (timeout_blur) {
+					clearTimeout(timeout_blur);
+					timeout_blur = null;
+				}
+
 				if (TLSelf.settings.disabled) {
 					return false;
 				} else if (!this.value.length && TLSelf.settings.localDataEmptyList && TLSelf.settings.local_data && !event.isTrigger) {
@@ -289,7 +296,8 @@
 				$token_list.addClass(TLSelf.settings.classes.focused);
 			})
 			.blur(function() {
-				hide_dropdown();
+				// wait for next focus
+				timeout_blur = setTimeout(hide_dropdown, 100);
 
 				if (TLSelf.settings.allowFreeTagging) {
 					add_freetagging_tokens();
