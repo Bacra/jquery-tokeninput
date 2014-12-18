@@ -398,10 +398,6 @@
 						if (selected_dropdown_item) {
 							add_token($(selected_dropdown_item).data("tokeninput"));
 							$hiddenInput.change();
-							if (TLSelf.settings.localDataEmptyList && TLSelf.settings.local_data) {
-								// show all local data list
-								populateEmptyDropdown();
-							}
 						} else {
 							if (TLSelf.settings.allowFreeTagging) {
 								if (TLSelf.settings.allowTabOut && $(this).val() === "") {
@@ -743,7 +739,12 @@
 			$input_box.val("");
 
 			// Don't show the help dropdown, they've got the idea
-			hide_dropdown();
+			if (TLSelf.settings.localDataEmptyList && TLSelf.settings.local_data) {
+				// show all local data list
+				populateEmptyDropdown();
+			} else {
+				hide_dropdown();
+			}
 
 			// Execute the onAdd callback if defined
 			if ($.isFunction(callback)) {
@@ -761,7 +762,9 @@
 				$input_box.val("");
 
 				// Hide dropdown if it is visible (eg if we clicked to select token)
-				hide_dropdown();
+				if (!TLSelf.settings.localDataEmptyList || !TLSelf.settings.local_data) {
+					hide_dropdown();
+				}
 			}
 
 			// focus for remove
