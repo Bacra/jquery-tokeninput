@@ -533,7 +533,6 @@
 		if (li_data && li_data.length) {
 			$.each(li_data, function(index, value) {
 				insert_token(value);
-				checkTokenLimit();
 			});
 		}
 
@@ -621,13 +620,6 @@
 			$hiddenInput.attr('disabled', TLSelf.settings.disabled);
 		}
 
-		function checkTokenLimit() {
-			if (TLSelf.settings.tokenLimit !== null && token_count >= TLSelf.settings.tokenLimit) {
-				$input_box.hide();
-				hide_dropdown();
-				return;
-			}
-		}
 
 		function resize_input() {
 			if (input_val === (input_val = $input_box.val())) {
@@ -705,9 +697,8 @@
 			if (TLSelf.settings.tokenLimit !== null && token_count >= TLSelf.settings.tokenLimit) {
 				$input_box.hide();
 				hide_dropdown();
+				return false;
 			}
-
-			return $this_token;
 		}
 
 		// Add a token to the token list based on user input
@@ -738,21 +729,18 @@
 			resize_input();
 
 			// Insert the new tokens
-			if (TLSelf.settings.tokenLimit == null || token_count < TLSelf.settings.tokenLimit) {
-				insert_token(item);
-				checkTokenLimit();
+			if (insert_token(item) !== false) {
+				// Don't show the help dropdown, they've got the idea
+				if (TLSelf.settings.localDataEmptyList && TLSelf.settings.local_data) {
+					// show all local data list
+					populateEmptyDropdown();
+				} else {
+					hide_dropdown();
+				}
 			}
 
 			// Clear input box
 			$input_box.val("");
-
-			// Don't show the help dropdown, they've got the idea
-			if (TLSelf.settings.localDataEmptyList && TLSelf.settings.local_data) {
-				// show all local data list
-				populateEmptyDropdown();
-			} else {
-				hide_dropdown();
-			}
 
 			// Execute the onAdd callback if defined
 			if ($.isFunction(callback)) {
